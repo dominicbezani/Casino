@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Casino Roulette</title>
+
+<style>
+body{
+    background:radial-gradient(circle,#146b32,#021b0b);
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+
+h1{
+    color:gold;
+    font-size:42px;
+}
+
+.game{
+    width:700px;
+    margin:auto;
+    background:#07501f;
+    padding:25px;
+    border-radius:25px;
+    box-shadow:0 0 40px black;
+}
+
+.info{
+    font-size:25px;
+    margin:15px;
+}
+
+select{
+    background:#042b14;
+    color:white;
+    border:2px solid gold;
+    padding:12px;
+    border-radius:10px;
+    font-size:18px;
+}
+
+.chip{
+    width:75px;
+    height:75px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:5px dashed white;
+    margin:10px;
+    cursor:pointer;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.blue{background:#2980b9}
+.redchip{background:#c0392b}
+.greenchip{background:#27ae60}
+.purple{background:#8e44ad}
+
+.selected{
+    box-shadow:0 0 20px white;
+    transform:scale(1.15);
+}
+
+.wheel-box{
+    position:relative;
+    width:520px;
+    margin:30px auto;
+}
+
+.pointer{
+    position:absolute;
+    top:-20px;
+    left:50%;
+    transform:translateX(-50%);
+    border-left:25px solid transparent;
+    border-right:25px solid transparent;
+    border-top:50px solid gold;
+    z-index:2;
+}
+
+canvas{
+    border-radius:50%;
+    border:15px solid gold;
+    transition:transform 5s cubic-bezier(.15,.7,.2,1);
+}
+
+button{
+    background:gold;
+    border:0;
+    padding:15px 40px;
+    border-radius:12px;
+    font-size:20px;
+    cursor:pointer;
+}
+
+#result{
+    margin:20px;
+    font-size:35px;
+    color:gold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>CASINO ROULETTE</h1>
+
+<div class="game">
+
+<div class="info">
+Münzen: <span id="money">5000</span><br>
+Einsatz: <span id="bet">10</span>
+</div>
+
+
+<h2>Farbe wählen</h2>
+
+<select id="color">
+<option value="red">Rot</option>
+<option value="black">Schwarz</option>
+<option value="green">Grün</option>
+</select>
+
+
+<h2>Chip wählen</h2>
+
+<div>
+
+<div class="chip blue selected" onclick="setBet(10,this)">10</div>
+<div class="chip redchip" onclick="setBet(50,this)">50</div>
+<div class="chip greenchip" onclick="setBet(100,this)">100</div>
+<div class="chip purple" onclick="setBet(500,this)">500</div>
+
+</div>
+
+
+<div class="wheel-box">
+
+<div class="pointer"></div>
+
+<canvas id="wheel" width="500" height="500"></canvas>
+
+</div>
+
+
+<button onclick="spin()">DREHEN</button>
+
+
+<div id="result">
+Bereit
+</div>
+
+</div>
+
+
+<script>
+
+const numbers=[
+0,32,15,19,4,21,2,25,17,
+34,6,27,13,36,11,30,8,
+23,10,5,24,16,33,1,
+20,14,31,9,22,18,29,
+7,28,12,35,3,26
+];
+
+
+const redNumbers=[
+1,3,5,7,9,12,14,16,
+18,19,21,23,25,27,
+30,32,34,36
+];
+
+
+let money=5000;
+let bet=10;
+let spinning=false;
+
+
+const canvas=document.getElementById("wheel");
+const ctx=canvas.getContext("2d");
+
+
+
+function drawWheel(){
+
+let center=250;
+let radius=240;
+let slice=Math.PI*2/37;
+
+
+for(let i=0;i<37;i++){
+
+let color="black";
+
+if(numbers[i]===0){
+color="green";
+}
+else if(redNumbers.includes(numbers[i])){
+color="red";
+}
+
+
+ctx.beginPath();
+ctx.moveTo(center,center);
+ctx.arc(center,center,radius,i*slice,(i+1)*slice);
+
+ctx.fillStyle=color;
+ctx.fill();
+
+ctx.strokeStyle="gold";
+ctx.stroke();
+
+
+ctx.save();
+
+ctx.translate(center,center);
+ctx.rotate(i*slice+slice/2);
+
+ctx.fillStyle="white";
+ctx.font="bold 16px Arial";
+ctx.textAlign="center";
+
+ctx.fillText(numbers[i],200,5);
+
+ctx.restore();
+
+}
+
+}
+
+drawWheel();
+
+
+
+function setBet(value,chip){
+
+bet=value;
+
+document.getElementById("bet").innerHTML=value;
+
+
+document.querySelectorAll(".chip")
+.forEach(c=>c.classList.remove("selected"));
+
+
+chip.classList.add("selected");
+
+}
+
+
+
+function spin(){
+
+if(spinning)return;
+
+if(bet>money){
+alert("Keine Münzen");
+return;
+}
+
+
+spinning=true;
+
+
+let index=Math.floor(Math.random()*37);
+
+let number=numbers[index];
+
+
+let color;
+
+
+if(number===0){
+color="green";
+}
+else if(redNumbers.includes(number)){
+color="red";
+}
+else{
+color="black";
+}
+
+
+
+canvas.style.transform =
+"rotate("+(3600-index*(360/37))+"deg)";
+
+
+
+setTimeout(()=>{
+
+
+let choice=document.getElementById("color").value;
+
+
+// richtige Prüfung
+
+if(choice === color){
+
+let win = bet + number;
+
+money += win;
+
+document.getElementById("result").innerHTML =
+"Gewonnen";
+
+}
+else{
+
+let loss = bet + number;
+
+money -= loss;
+
+document.getElementById("result").innerHTML =
+"Verloren";
+
+}
+
+
+document.getElementById("money").innerHTML=money;
+
+
+spinning=false;
+
+
+},5000);
+
+}
+
+</script>
+
+</body>
+</html>
